@@ -345,6 +345,7 @@ class ::OAuth2BasicAuthenticator < Auth::ManagedAuthenticator
         	#This should ensure that users who were suspended for reasons outside of ban_reason remain suspended
         	if target.suspended? && target.suspend_reason == ban_reason
         		StaffActionLogger.new(Discourse.system_user).log_user_unsuspend(target)
+          end
         	
         else
         	if !target.suspended?
