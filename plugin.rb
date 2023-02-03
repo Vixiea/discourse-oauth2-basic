@@ -251,6 +251,32 @@ class ::OAuth2BasicAuthenticator < Auth::ManagedAuthenticator
           json_walk(result, user_json, prop, custom_path: detail)
         end
       end
+      
+      #Begin Wild Apricot Additions
+      extended_user_json_url = SiteSetting.oauth2_extended_user_json_url.sub(":user_id", result[:user_id].to_s).sub(":id", id.to_s)
+      extended_user_json_method = SiteSetting.oauth2_extended_user_json_url_method.downcase.to_sym
+
+      log("extended_user_json_url: #{extended_user_json_method} #{extended_user_json_url}")
+
+      bearer_token = "Bearer #{token}"
+      connection = Faraday.new { |f| f.adapter FinalDestination::FaradayAdapter }
+      headers = { "Authorization" => bearer_token, "Accept" => "application/json" }
+      extended_user_json_response = connection.run_request(extended_user_json_method, extended_user_json_url, nil, headers)
+
+      log("extended_user_json_response: #{extended_user_json_response.inspect}")
+
+      if extended_user_json_response.status == 200
+        extended_user_json = JSON.parse(extended_user_json_response.body)
+
+        log("extended_user_json: #{extended_user_json}")
+
+        if extended_user_json.present?
+          json_walk(result, user_json, :status)
+          json_walk(result, user_json, :suspended_member)
+          json_walk(result, user_json, :archived)
+        end
+      #End Wild Apricot Additions
+      
       result
     else
       nil
@@ -290,6 +316,49 @@ class ::OAuth2BasicAuthenticator < Auth::ManagedAuthenticator
         DiscoursePluginRegistry.oauth2_basic_additional_json_paths.each do |detail|
           auth["extra"][detail] = fetched_user_details["extra:#{detail}"]
         end
+        
+        #Begin Wild Apricot Additions. This will suspend the user account after checking Status, 'Suspended member', and Archived
+        #Since this suspension happens before the final auth, the website will properly kickback that the user is suspended even though their credentials are correct.
+        #This will also unsuspend the user once their account is in good standing
+        good_standing = false
+        
+        case fetched_user_details[:status].to_s
+        	when "Active"
+        		good_standing = true
+        	when "PendingRenewal"
+        		good_standing = true
+        end
+
+        if fetched_user_details[:suspended_member].to_s = "0"
+        	good_standing = true
+        end
+
+        if fetched_user_details[:archived].to_s = "0"
+        	good_standing = true
+        end
+
+        target = UserEmail.find_by(email: fetched_user_details[:email])&.user
+        suspend_years = 200
+        ban_reason = "Wild Apricot Membership Standing"
+
+        if good_standing?
+        	#This should ensure that users who were suspended for reasons outside of ban_reason remain suspended
+        	if target.suspended? && target.suspend_reason == ban_reason
+        		StaffActionLogger.new(Discourse.system_user).log_user_unsuspend(target)
+        	
+        else
+        	if !target.suspended?
+    			User.transaction do
+    				target.suspended_at = DateTime.now
+    				target.suspended_till = suspend_years.years.from_now
+    				target.save!
+
+    				StaffActionLogger.new(Discourse.system_user).log_user_suspend(target, ban_reason)
+        		end
+        	end
+        end
+        #End Wild Apricot Affitions.
+        
       else
         result = Auth::Result.new
         result.failed = true
