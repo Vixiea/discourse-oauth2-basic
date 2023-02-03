@@ -258,9 +258,9 @@ class ::OAuth2BasicAuthenticator < Auth::ManagedAuthenticator
 
       log("extended_user_json_url: #{extended_user_json_method} #{extended_user_json_url}")
 
-      bearer_token = "Bearer #{token}"
-      connection = Faraday.new { |f| f.adapter FinalDestination::FaradayAdapter }
-      headers = { "Authorization" => bearer_token, "Accept" => "application/json" }
+      #bearer_token = "Bearer #{token}"
+      #connection = Faraday.new { |f| f.adapter FinalDestination::FaradayAdapter }
+      #headers = { "Authorization" => bearer_token, "Accept" => "application/json" }
       extended_user_json_response = connection.run_request(extended_user_json_method, extended_user_json_url, nil, headers)
 
       log("extended_user_json_response: #{extended_user_json_response.inspect}")
@@ -271,9 +271,9 @@ class ::OAuth2BasicAuthenticator < Auth::ManagedAuthenticator
         log("extended_user_json: #{extended_user_json}")
 
         if extended_user_json.present?
-          json_walk(result, user_json, :status)
-          json_walk(result, user_json, :suspended_member)
-          json_walk(result, user_json, :archived)
+          json_walk(result, extended_user_json, :status)
+          json_walk(result, extended_user_json, :suspended_member)
+          json_walk(result, extended_user_json, :archived)
         end
       end
       #End Wild Apricot Additions
