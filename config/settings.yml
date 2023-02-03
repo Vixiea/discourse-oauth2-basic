@@ -33,6 +33,16 @@ login:
   oauth2_json_email_path: ""
   oauth2_json_email_verified_path: ""
   oauth2_json_avatar_path: ""
+  oauth2_extended_user_json_url: ""
+  oauth2_extended_user_json_url_method:
+    default: "GET"
+    type: enum
+    choices:
+      - GET
+      - POST
+  oauth2_json_status_path: ""
+  oauth2_json_suspended_member_path: ""
+  oauth2_json_archived_path: ""
   oauth2_email_verified: false
   oauth2_overrides_email: false
   oauth2_send_auth_header: true
