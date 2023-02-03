@@ -275,6 +275,7 @@ class ::OAuth2BasicAuthenticator < Auth::ManagedAuthenticator
           json_walk(result, user_json, :suspended_member)
           json_walk(result, user_json, :archived)
         end
+      end
       #End Wild Apricot Additions
       
       result
