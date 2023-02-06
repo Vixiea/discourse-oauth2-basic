@@ -298,20 +298,26 @@ class ::OAuth2BasicAuthenticator < Auth::ManagedAuthenticator
         #Since this suspension happens before the final auth, the website will properly kickback that the user is suspended even though their credentials are correct.
         #This will also unsuspend the user once their account is in good standing.
         good_standing = false
-        
-        case fetched_user_details[:status].to_s
-        	when "Active"
-        		good_standing = true
-        	when "PendingRenewal"
-        		good_standing = true
-        end
-
         target = UserEmail.find_by(email: fetched_user_details[:email])&.user
         suspend_years = 200
         ban_reason = "Wild Apricot Membership Standing"
+        
+        log("fetched_user_details: #{fetched_user_details}")
+        
+        if fetched_user_details[:status].to_s == "Active"
+        		good_standing = true
+        end
+        if fetched_user_details[:status].to_s == "PendingRenewal"
+        		good_standing = true
+        end
 
+        log("good_standing: #{good_standing}")
+        
         if good_standing = true
         	#This should ensure that users who were suspended for reasons outside of ban_reason remain suspended
+          log("target.suspended?: #{target.suspended?}")
+          log("target.suspend_reason: #{target.suspend_reason}")
+          log("ban_reason: #{ban_reason}")
         	if target.suspended? && target.suspend_reason == ban_reason
         		StaffActionLogger.new(Discourse.system_user).log_user_unsuspend(target)
           end
