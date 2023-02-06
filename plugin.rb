@@ -310,7 +310,7 @@ class ::OAuth2BasicAuthenticator < Auth::ManagedAuthenticator
         suspend_years = 200
         ban_reason = "Wild Apricot Membership Standing"
 
-        if good_standing?
+        if good_standing = true
         	#This should ensure that users who were suspended for reasons outside of ban_reason remain suspended
         	if target.suspended? && target.suspend_reason == ban_reason
         		StaffActionLogger.new(Discourse.system_user).log_user_unsuspend(target)
