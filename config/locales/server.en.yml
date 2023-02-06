@@ -1,6 +1,7 @@
 en:
   login:
     authenticator_error_fetch_user_details: "Could not retrieve your user details. Do you have an active account?"
+    autehnticator_error_bad_standing: "Unable to login, your account is currently not in good financial standing. Please update your billing or reach out to a board member to resolve this"
 
   site_settings:
     oauth2_enabled: "Custom OAuth2 is enabled"
