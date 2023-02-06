@@ -318,11 +318,13 @@ class ::OAuth2BasicAuthenticator < Auth::ManagedAuthenticator
           log("target.suspended?: #{target.suspended?}")
           log("target.suspend_reason: #{target.suspend_reason}")
           log("ban_reason: #{ban_reason}")
+          log("if suspended statement: #{target.suspended? && target.suspended_reason == ban_reason}")
         	if target.suspended? && target.suspend_reason == ban_reason
         		StaffActionLogger.new(Discourse.system_user).log_user_unsuspend(target)
           end
         	
         else
+          log("!target.suspended?: #{!target.suspended?}")
         	if !target.suspended?
     			User.transaction do
     				target.suspended_at = DateTime.now
