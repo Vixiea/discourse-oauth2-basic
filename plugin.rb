@@ -250,14 +250,14 @@ class ::OAuth2BasicAuthenticator < Auth::ManagedAuthenticator
         json_walk(result, user_json, :status)
         
         #Takes DisplayName, removes comma, and reverses order
-        Processed_Name = result[:name].split(", ")
-        Processed_Name_Result = "#{Processed_Name.last} #{Processed_Name.first}"
-        result[:name] = Processed_Name_Result
+        processed_name = result[:name].split(", ")
+        processed_name_result = "#{processed_name.last} #{processed_name.first}"
+        result[:name] = processed_name_result
         
         #Takes username and sets it to first initial|last name|last 4 of user_id. 
         #Substitues spaces with underscores in the event of a double last name with a space.
-        Processed_Username_Result = "#{Processed_Name_Result[0, 1]}#{Processed_Name.first}#{result[:user_id].to_s[-4, 4]}".downcase.tr(" ", "_")
-        result[:username] = Processed_Username_Result
+        processed_username_result = "#{processed_name_result[0, 1]}#{processed_name.first}#{result[:user_id].to_s[-4, 4]}".downcase.tr(" ", "_")
+        result[:username] = processed_username_result
         #End Wild Apricot Addition
 
         DiscoursePluginRegistry.oauth2_basic_additional_json_paths.each do |detail|
