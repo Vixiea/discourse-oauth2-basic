@@ -245,8 +245,20 @@ class ::OAuth2BasicAuthenticator < Auth::ManagedAuthenticator
         json_walk(result, user_json, :email)
         json_walk(result, user_json, :email_verified)
         json_walk(result, user_json, :avatar)
+        
         #Wild Apricot Addition
         json_walk(result, user_json, :status)
+        
+        #Takes DisplayName, removes comma, and reverses order
+        Processed_Name = result[:name].split(", ")
+        Processed_Name_Result = "#{Processed_Name.last} #{Processed_Name.first}"
+        result[:name] = Processed_Name_Result
+        
+        #Takes username and sets it to first initial|last name|last 4 of user_id. 
+        #Substitues spaces with underscores in the event of a double last name with a space.
+        Processed_Username_Result = "#{Processed_Name_Result[0, 1]}#{Processed_Name.first}#{result[:user_id].to_s[-4, 4]}".downcase.tr(" ", "_")
+        result[:username] = Processed_Username_Result
+        #End Wild Apricot Addition
 
         DiscoursePluginRegistry.oauth2_basic_additional_json_paths.each do |detail|
           prop = "extra:#{detail}"
@@ -335,6 +347,14 @@ class ::OAuth2BasicAuthenticator < Auth::ManagedAuthenticator
                 StaffActionLogger.new(Discourse.system_user).log_user_suspend(target, ban_reason)
               end
             end
+          end
+        
+        else
+          if good_standing == false
+            result = Auth::Result.new
+            result.failed = true
+            result.failed_reason = I18n.t("login.authenticator_error_fetch_user_details"
+            return result
           end
         end
         #End Wild Apricot Affitions.
