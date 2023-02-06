@@ -319,7 +319,7 @@ class ::OAuth2BasicAuthenticator < Auth::ManagedAuthenticator
           log("target.suspend_reason: #{target.suspend_reason}")
           log("ban_reason: #{ban_reason}")
           log("if suspended statement: #{target.suspended? && target.suspend_reason.to_s == ban_reason}")
-        	if target.suspended == true && target.suspend_reason.to_s == ban_reason
+        	if target.suspended? && target.suspend_reason.to_s == ban_reason
         		StaffActionLogger.new(Discourse.system_user).log_user_unsuspend(target)
           end
         	
