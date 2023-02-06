@@ -298,7 +298,6 @@ class ::OAuth2BasicAuthenticator < Auth::ManagedAuthenticator
         #Since this suspension happens before the final auth, the website will properly kickback that the user is suspended even though their credentials are correct.
         #This will also unsuspend the user once their account is in good standing.
         good_standing = false
-        target = UserEmail.find_by(email: fetched_user_details[:email])&.user
         suspend_years = 200
         ban_reason = "Wild Apricot Membership Standing"
         
@@ -313,27 +312,30 @@ class ::OAuth2BasicAuthenticator < Auth::ManagedAuthenticator
 
         log("good_standing: #{good_standing}")
         
-        if good_standing == true
-        	#This should ensure that users who were suspended for reasons outside of ban_reason remain suspended
-          log("target.suspended?: #{target.suspended?}")
-          log("target.suspend_reason: #{target.suspend_reason}")
-          log("ban_reason: #{ban_reason}")
-          log("if suspended statement: #{target.suspended? && target.suspend_reason.to_s == ban_reason}")
-        	if target.suspended? && target.suspend_reason.to_s == ban_reason
-        		StaffActionLogger.new(Discourse.system_user).log_user_unsuspend(target)
-          end
-        	
-        else
-          log("!target.suspended?: #{!target.suspended?}")
-        	if !target.suspended?
-    			User.transaction do
-    				target.suspended_at = DateTime.now
-    				target.suspended_till = suspend_years.years.from_now
-    				target.save!
+        if target = UserEmail.find_by(email: fetched_user_details[:email])&.user
+          log("target: #{target}")
+          if good_standing == true
+            #This should ensure that users who were suspended for reasons outside of ban_reason remain suspended
+            log("target.suspended?: #{target.suspended?}")
+            log("target.suspend_reason: #{target.suspend_reason}")
+            log("ban_reason: #{ban_reason}")
+            log("if suspended statement: #{target.suspended? && target.suspend_reason.to_s == ban_reason}")
+            if target.suspended? && target.suspend_reason.to_s == ban_reason
+              StaffActionLogger.new(Discourse.system_user).log_user_unsuspend(target)
+            end
 
-    				StaffActionLogger.new(Discourse.system_user).log_user_suspend(target, ban_reason)
-        		end
-        	end
+          else
+            log("!target.suspended?: #{!target.suspended?}")
+            if !target.suspended?
+              User.transaction do
+                target.suspended_at = DateTime.now
+                target.suspended_till = suspend_years.years.from_now
+                target.save!
+
+                StaffActionLogger.new(Discourse.system_user).log_user_suspend(target, ban_reason)
+              end
+            end
+          end
         end
         #End Wild Apricot Affitions.
         
