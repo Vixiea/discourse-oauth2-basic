@@ -311,7 +311,7 @@ class ::OAuth2BasicAuthenticator < Auth::ManagedAuthenticator
         #This will also unsuspend the user once their account is in good standing.
         good_standing = false
         suspend_years = 200
-        ban_reason = "Wild Apricot Membership Standing"
+        ban_reason = "Unable to login, your account is currently not in good financial standing. Please update your billing or reach out to a board member to resolve this."
         
         log("fetched_user_details: #{fetched_user_details}")
         
@@ -333,7 +333,13 @@ class ::OAuth2BasicAuthenticator < Auth::ManagedAuthenticator
             log("ban_reason: #{ban_reason}")
             log("if suspended statement: #{target.suspended? && target.suspend_reason.to_s == ban_reason}")
             if target.suspended? && target.suspend_reason.to_s == ban_reason
-              StaffActionLogger.new(Discourse.system_user).log_user_unsuspend(target)
+              User.transaction do
+                target.suspended_at = nil
+                target.suspended_till = nil
+                target.save!
+                
+                StaffActionLogger.new(Discourse.system_user).log_user_unsuspend(target)
+              end
             end
 
           else
